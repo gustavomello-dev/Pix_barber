@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Pagamento Pix - Barbearia</title>
+        <style>
+            :root {
+                --bg: #121214;
+                --card-bg: #202024;
+                --border: #323238;
+                --primary: #e5a93c; /* Dourado Barbearia */
+                --primary-hover: #cf962d;
+                --success: #00b37e;
+                --text: #e1e1e6;
+                --text-muted: #a8a8b3;
+            }
+
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+                font-family:
+                    "Segoe UI",
+                    system-ui,
+                    -apple-system,
+                    sans-serif;
+            }
+
+            body {
+                background-color: var(--bg);
+                color: var(--text);
+                padding: 2rem 1rem;
+                max-width: 850px;
+                margin: 0 auto;
+            }
+
+            header {
+                text-align: center;
+                margin-bottom: 2.5rem;
+            }
+
+            header h1 {
+                color: var(--primary);
+                font-size: 2rem;
+                margin-bottom: 0.5rem;
+            }
+
+            header p {
+                color: var(--text-muted);
+            }
+
+            /* Grid de Serviços */
+            .servicos-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+                gap: 1.25rem;
+                margin-bottom: 2rem;
+            }
+
+            .card {
+                background-color: var(--card-bg);
+                border: 1px solid var(--border);
+                border-radius: 10px;
+                padding: 1.5rem;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                transition:
+                    transform 0.2s,
+                    border-color 0.2s;
+            }
+
+            .card:hover {
+                transform: translateY(-3px);
+                border-color: var(--primary);
+            }
+
+            .card h3 {
+                font-size: 1.2rem;
+                margin-bottom: 0.4rem;
+            }
+
+            .card p {
+                color: var(--text-muted);
+                font-size: 0.9rem;
+                margin-bottom: 1.25rem;
+                flex-grow: 1;
+            }
+
+            .preco {
+                font-size: 1.5rem;
+                font-weight: 700;
+                color: var(--primary);
+                margin-bottom: 1rem;
+            }
+
+            button {
+                background-color: var(--primary);
+                color: #121214;
+                border: none;
+                border-radius: 6px;
+                padding: 0.75rem 1rem;
+                font-size: 0.95rem;
+                font-weight: 700;
+                cursor: pointer;
+                transition:
+                    background-color 0.2s,
+                    opacity 0.2s;
+                width: 100%;
+            }
+
+            button:hover {
+                background-color: var(--primary-hover);
+            }
+
+            button:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+            }
+
+            /* Área de Exibição do Pix */
+            #pix-area {
+                display: none;
+                background-color: var(--card-bg);
+                border: 2px solid var(--primary);
+                border-radius: 12px;
+                padding: 2rem;
+                text-align: center;
+                margin-top: 2rem;
+                animation: fadeIn 0.3s ease-in-out;
+            }
+
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            #pix-area h2 {
+                margin-bottom: 0.25rem;
+            }
+
+            .resumo-pagamento {
+                color: var(--primary);
+                font-size: 1.15rem;
+                font-weight: 600;
+                margin-bottom: 1rem;
+            }
+
+            .qrcode-box {
+                background: #ffffff;
+                padding: 0.75rem;
+                border-radius: 8px;
+                display: inline-block;
+                margin: 1rem 0;
+            }
+
+            .qrcode-box img {
+                display: block;
+                width: 240px;
+                height: 240px;
+            }
+
+            .copia-cola-box {
+                max-width: 520px;
+                margin: 1rem auto 0;
+                text-align: left;
+            }
+
+            .copia-cola-box label {
+                display: block;
+                font-size: 0.85rem;
+                color: var(--text-muted);
+                margin-bottom: 0.4rem;
+            }
+
+            .input-group {
+                display: flex;
+                gap: 0.5rem;
+            }
+
+            .input-group input {
+                flex: 1;
+                background-color: var(--bg);
+                border: 1px solid var(--border);
+                color: var(--text);
+                padding: 0.75rem;
+                border-radius: 6px;
+                font-family: monospace;
+                font-size: 0.85rem;
+            }
+
+            .btn-copiar {
+                width: auto;
+                white-space: nowrap;
+                padding: 0 1.25rem;
+            }
+
+            .btn-copiar.copiado {
+                background-color: var(--success);
+                color: #ffffff;
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <h1>💈 Barbearia — Pagamento Rápido</h1>
+            <p>
+                Escolha o serviço abaixo para gerar o QR Code Pix
+                instantaneamente
+            </p>
+        </header>
+
+        <main>
+            <!-- Os cards serão renderizados via JavaScript -->
+            <div id="lista-servicos" class="servicos-grid">
+                <p>Carregando serviços...</p>
+            </div>
+
+            <!-- Container do QR Code e Copia e Cola -->
+            <section id="pix-area">
+                <h2 id="pix-servico">Nome do Serviço</h2>
+                <p id="pix-valor" class="resumo-pagamento">R$ 0,00</p>
+                <p style="color: var(--text-muted); font-size: 0.9rem">
+                    Abra o app do seu banco e escaneie o QR Code ou use o Pix
+                    Copia e Cola:
+                </p>
+
+                <div class="qrcode-box">
+                    <img id="pix-qrcode" src="" alt="QR Code Pix" />
+                </div>
+
+                <div class="copia-cola-box">
+                    <label for="pix-copia-cola">Código Pix Copia e Cola:</label>
+                    <div class="input-group">
+                        <input type="text" id="pix-copia-cola" readonly />
+                        <button
+                            id="btn-copiar"
+                            class="btn-copiar"
+                            onclick="copiarCodigoPix()">
+                            Copiar Pix Copia e Cola
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <script>
+            const formatarMoeda = (valor) =>
+                Number(valor).toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                });
+
+            // 1. Carrega os serviços da API ao abrir a página
+            async function carregarServicos() {
+                const container = document.getElementById("lista-servicos");
+                try {
+                    const resposta = await fetch("/api/servicos");
+                    const servicos = await resposta.json();
+
+                    container.innerHTML = servicos
+                        .map(
+                            (s) => `
+          <div class="card">
+            <div>
+              <h3>${s.nome}</h3>
+              <p>${s.descricao}</p>
+            </div>
+            <div>
+              <div class="preco">${formatarMoeda(s.valor)}</div>
+              <button onclick="gerarPagamentoPix('${s.id}', this)">
+                Pagar com Pix
+              </button>
+            </div>
+          </div>
+        `,
+                        )
+                        .join("");
+                } catch (erro) {
+                    container.innerHTML =
+                        "<p>Erro ao carregar o catálogo de serviços.</p>";
+                    console.error(erro);
+                }
+            }
+
+            // 2. Solicita ao backend a geração do BR Code e QR Code
+            async function gerarPagamentoPix(servicoId, botaoElemento) {
+                const textoOriginal = botaoElemento.textContent;
+                botaoElemento.disabled = true;
+                botaoElemento.textContent = "Gerando Pix...";
+
+                try {
+                    const resposta = await fetch("/api/gerar-pix", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ servicoId }),
+                    });
+
+                    const dados = await resposta.json();
+
+                    if (!resposta.ok) {
+                        alert(dados.erro || "Erro ao gerar cobrança Pix.");
+                        return;
+                    }
+
+                    // Preenche os dados na tela
+                    document.getElementById("pix-servico").textContent =
+                        dados.servico;
+                    document.getElementById("pix-valor").textContent =
+                        formatarMoeda(dados.valor);
+                    document.getElementById("pix-qrcode").src =
+                        dados.qrCodeImage;
+                    document.getElementById("pix-copia-cola").value =
+                        dados.copiaECola;
+
+                    // Exibe a seção do Pix e rola a tela suavemente até ela
+                    const pixArea = document.getElementById("pix-area");
+                    pixArea.style.display = "block";
+                    pixArea.scrollIntoView({ behavior: "smooth" });
+                } catch (erro) {
+                    alert("Falha de comunicação com o servidor.");
+                    console.error(erro);
+                } finally {
+                    botaoElemento.disabled = false;
+                    botaoElemento.textContent = textoOriginal;
+                }
+            }
+
+            // 3. Copia a string do BR Code para a área de transferência
+            async function copiarCodigoPix() {
+                const input = document.getElementById("pix-copia-cola");
+                const btn = document.getElementById("btn-copiar");
+
+                try {
+                    await navigator.clipboard.writeText(input.value);
+                    btn.textContent = "Copiado! ✓";
+                    btn.classList.add("copiado");
+
+                    setTimeout(() => {
+                        btn.textContent = "Copiar Pix Copia e Cola";
+                        btn.classList.remove("copiado");
+                    }, 2500);
+                } catch (err) {
+                    // Fallback caso o navegador bloqueie a Clipboard API
+                    input.select();
+                    document.execCommand("copy");
+                    alert("Código Pix copiado!");
+                }
+            }
+
+            // Inicializa a tela
+            carregarServicos();
+        </script>
+    </body>
+</html>

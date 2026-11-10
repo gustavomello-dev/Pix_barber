@@ -1,0 +1,16 @@
+{
+    "name": "pix-barbearia",
+    "version": "1.0.0",
+    "description": "Protótipo de pagamentos via Pix Estático (BR Code) para barbearia",
+    "main": "src/server.js",
+    "type": "module",
+    "scripts": {
+        "start": "node src/server.js",
+        "dev": "node --watch src/server.js"
+    },
+    "dependencies": {
+        "dotenv": "^16.4.5",
+        "express": "^4.21.0",
+        "qrcode": "^1.5.4"
+    }
+}
